@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Sivaji Chinnam – Projects</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link rel="icon" type="image/png" href="assets/favicon2.png">
+
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; cursor: default; }
+        canvas { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #1e293b, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: #3b82f6;
+            margin-left: 2px;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .modal-scroll-area::-webkit-scrollbar { width: 4px; }
+        .modal-scroll-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 overflow-x-hidden">
+
+<canvas id="bg"></canvas>
+
+<header class="py-24 text-center px-4" data-aos="fade-down">
+    <h1 class="text-6xl font-bold tracking-tight gradient-text">Sivaji Chinnam</h1>
+    <p id="tagline" class="text-xl mt-6 text-slate-500 font-light max-w-2xl mx-auto min-h-[1.5em] typing-cursor"></p>
+</header>
+
+<section class="max-w-7xl mx-auto px-6">
+    <div class="flex items-center gap-4 mb-12">
+        <h2 class="text-3xl font-bold text-slate-800">Completed Projects</h2>
+        <div class="h-[1px] flex-grow bg-slate-200"></div>
+    </div>
+    <div id="completedGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+</section>
+
+<section class="max-w-7xl mx-auto px-6 mt-32 pb-32">
+    <div class="flex items-center gap-4 mb-12">
+        <h2 class="text-3xl font-bold text-slate-800">Ongoing Works</h2>
+        <div class="h-[1px] flex-grow bg-slate-200"></div>
+    </div>
+    <div id="ongoingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+</section>
+
+<div id="modal" class="fixed inset-0 hidden bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-[2.5rem] max-w-2xl w-full h-[90vh] overflow-hidden shadow-2xl relative flex flex-col">
+        <button onclick="closeModal()" class="absolute top-6 right-6 z-40 bg-white shadow-xl w-10 h-10 rounded-full flex items-center justify-center text-slate-900 hover:scale-110 transition-transform">✕</button>
+
+        <div class="overflow-y-auto modal-scroll-area">
+            <div class="relative bg-slate-100 h-[400px] flex items-center justify-center overflow-hidden">
+                <img id="modalImage" class="w-full h-full object-cover transition-opacity duration-300" src="" />
+                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent h-24"></div>
+                
+                <div class="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between z-20">
+                    <button onclick="manualPrev()" class="bg-white/90 hover:bg-white p-3 rounded-full text-slate-900 shadow-lg transition-all active:scale-90">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button onclick="manualNext()" class="bg-white/90 hover:bg-white p-3 rounded-full text-slate-900 shadow-lg transition-all active:scale-90">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+                <span id="imgCounter" class="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/30 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold text-white uppercase tracking-widest"></span>
+            </div>
+
+            <div class="p-10">
+                <h3 id="modalTitle" class="text-4xl font-bold mb-6 text-slate-900"></h3>
+                <p id="modalDesc" class="text-slate-500 text-lg leading-relaxed font-light mb-8"></p>
+                <a id="modalLink" target="_blank" class="flex items-center justify-center gap-3 w-full py-5 rounded-[1.5rem] bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition-all">
+                    Explore Project Live <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="text-center py-16 border-t border-slate-200 text-slate-400 text-sm">
+    <p>© 2026 Sivaji Chinnam <span class="mx-2">•</span> UI/UX & Product Designer</p>
+</footer>
+
+<script>
+    AOS.init({ duration: 1000, once: true, easing: 'ease-out-quad' });
+
+    // TYPING ANIMATION
+    const taglines = [
+        "Crafting digital experiences through purposeful UI/UX.",
+        "Developing high-performance web solutions for modern brands.",
+        "Turning complex problems into elegant design systems."
+    ];
+    let taglineIndex = 0, charIndex = 0, isDeleting = false;
+    function type() {
+        const taglineEl = document.getElementById("tagline");
+        const current = taglines[taglineIndex];
+        taglineEl.textContent = isDeleting ? current.substring(0, charIndex - 1) : current.substring(0, charIndex + 1);
+        charIndex = isDeleting ? charIndex - 1 : charIndex + 1;
+        let speed = isDeleting ? 30 : 60;
+        if (!isDeleting && charIndex === current.length) { isDeleting = true; speed = 2000; }
+        else if (isDeleting && charIndex === 0) { isDeleting = false; taglineIndex = (taglineIndex + 1) % taglines.length; speed = 500; }
+        setTimeout(type, speed);
+    }
+    type();
+
+    // DATA
+    const completedProjects = [
+        { title:"Apex Constructions", link:"https://apexconstructions.vercel.app/", desc:"High-end corporate identity for a construction firm.", cover: "assets/apexdash.png", images:["assets/apex1.png","assets/apex2.png","assets/apex3.png"] },
+        { title:"CreaGen Test Portal", link:"https://creagentest.vercel.app/", desc:"A vibrant, tech-forward agency landing page.", cover: "assets/cgt4.png", images:["assets/cgt2.png","assets/cgt3.png","assets/cgt1.png"] },
+        { title:"Industry Demo Site", link:"https://industry-demo-site.vercel.app/", desc:"Streamlined industrial interface for logistics.", cover: "assets/zs4.png", images:["assets/zs3.png","assets/zs2.png","assets/zs1.png"] },
+        { title:"Kiran Associates", link:"https://kiran-associates-v1.vercel.app/", desc:"Legal and consulting UI with authoritative calm.", cover: "assets/ka4.png", images:["assets/ka3.png","assets/ka2.png","assets/ka1.png"] },
+        { title:"SR Solutions", link:"https://srsolutionsproject.vercel.app/", desc:"Clean, modular corporate services layout.", cover: "assets/sr4.png", images:["assets/sr3.png","assets/sr2.png","assets/sr1.png"] },
+        { title:"FutureX College Event", link:"https://futurex-beige.vercel.app/", desc:"High-energy platform for college attendees.", cover: "assets/fx6.png", images:["assets/fx5.png","assets/fx4.png","assets/fx3.png","assets/fx2.png","assets/fx1.png"] },
+        {
+  title: "AETHER – Kinetic Particle Universe",
+  link: "https://aether-kinetic-particle-universe.vercel.app/",
+  desc: "An advanced real-time particle simulation and creative-tech engine built with Three.js, featuring 100K+ dynamic particles, gesture-based interaction, procedural shape morphing, and image/3D object reconstruction for experimental digital experiences and immersive visual computing.",
+  cover: "assets/ak1.png",
+  images: ["assets/ak2.png", "assets/ak3.png", "assets/ak4.png"]
+},
+        {
+  title: "Lumina Sofa",
+  link: "https://luminacafe.vercel.app/",
+  desc: "A premium 3D product experience showcasing a smart color-changing sofa concept with interactive UI, cinematic transitions, and immersive product visualization for modern furniture brands.",
+  cover: "assets/la4.png",
+  images: ["assets/la5.png","assets/la3.png", "assets/la2.png", "assets/la1.png"]
+},
+{
+  title: "Culinaire",
+  link: "https://culinairedesign.vercel.app/",
+  desc: "A luxury restaurant brand website concept featuring elegant UI, refined typography, smooth animations, and a premium digital dining experience for high-end hospitality brands.",
+  cover: "assets/lc4.png",
+  images: ["assets/lc3.png", "assets/lc2.png", "assets/lc1.png"]
+},
+{
+  title: "Aura Cafe",
+  link: "https://auracafe.vercel.app/",
+  desc: "A modern cafe brand website concept with warm aesthetics, smooth micro-interactions, and a visually rich UI designed to create a welcoming and immersive digital cafe experience.",
+  cover: "assets/ar5.png",
+  images: ["assets/ar4.png", "assets/ar3.png", "assets/ar2.png","assets/ar1.png"]
+}
+
+    ];
+
+    const ongoingProjects = [
+        { title:"Nyaya Vadh AI", link:"#", desc:"AI-driven legal workspace for document drafting.", cover: "assets/nv5.png", images:["assets/nv4.png", "assets/nv3.png"] },
+        { title:"Apex Warehouse", link:"#", desc: "Centralized warehouse management for site tracking.", cover: "assets/aw8.png", images:["assets/aw7.png","assets/aw6.png"] },
+        { title:"Healthcare AI (Bujji)", link:"#", desc:"AI health monitoring and wellness tracking.", cover: "assets/bh3.png", images:["assets/bh2.png"] },
+        { title:"Kisan Kart", link:"#", desc:"Direct-to-consumer marketplace for farming tools.", cover: "assets/kk3.png", images:["assets/kk3.png","assets/kk2.png"] },
+        {title: "Pinakapani", link: "#", desc: "A mythological cinematic universe project centered around Lord Shiva’s divine power, blending epic storytelling, visual world-building, and high-impact digital experiences through posters, teasers, and motion concepts.", cover: "assets/pp7.png", images: ["assets/pp6.png", "assets/pp5.png","assets/pp4.png","assets/pp3.png","assets/pp2.png","assets/pp1.png"]
+}
+
+    ];
+
+    function render(list, gridId){
+        const grid=document.getElementById(gridId);
+        list.forEach((p, index)=>{
+            const card=document.createElement("div");
+            card.className="glass-card rounded-[2.5rem] overflow-hidden flex flex-col h-full";
+            card.setAttribute('data-aos', 'fade-up');
+            card.innerHTML = `
+                <div class="h-60 overflow-hidden relative">
+                    <img src="${p.cover}" class="w-full h-full object-cover" />
+                </div>
+                <div class="p-8 flex flex-col flex-grow">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">${p.title}</h3>
+                    <p class="text-slate-500 text-sm font-light leading-relaxed mb-8 flex-grow">${p.desc}</p>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick='openModal(${JSON.stringify(p)})' class="py-3 px-4 bg-slate-100 text-slate-600 rounded-2xl text-xs font-bold hover:bg-slate-200 transition-all">View Brief</button>
+                        ${p.link !== "#" ? `<a href="${p.link}" target="_blank" class="py-3 px-4 bg-blue-600 text-white rounded-2xl text-xs font-bold text-center hover:bg-blue-700 transition-all">View Live</a>` : `<span class="py-3 px-4 bg-slate-50 text-slate-300 rounded-2xl text-xs font-bold text-center border border-dashed">Building...</span>`}
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    render(completedProjects,"completedGrid");
+    render(ongoingProjects,"ongoingGrid");
+
+    // MODAL LOGIC
+    let currentImages=[], currentIndex=0, autoScrollInterval;
+    function openModal(p){
+        document.getElementById("modalTitle").innerText=p.title;
+        document.getElementById("modalDesc").innerText=p.desc;
+        const linkBtn = document.getElementById("modalLink");
+        linkBtn.href=p.link; linkBtn.style.display = p.link === "#" ? "none" : "flex";
+        currentImages=p.images; currentIndex=0; updateImage();
+        document.getElementById("modal").classList.remove("hidden");
+        document.body.style.overflow = 'hidden';
+        autoScrollInterval = setInterval(nextImg, 3000);
+    }
+    function closeModal(){ document.getElementById("modal").classList.add("hidden"); document.body.style.overflow = 'auto'; clearInterval(autoScrollInterval); }
+    function updateImage(){
+        const img = document.getElementById("modalImage");
+        img.style.opacity = '0';
+        setTimeout(() => { img.src=currentImages[currentIndex]; img.style.opacity = '1'; }, 200);
+        document.getElementById("imgCounter").innerText=(currentIndex+1)+" / "+currentImages.length;
+    }
+    function nextImg(){ currentIndex=(currentIndex+1)%currentImages.length; updateImage(); }
+    function prevImg(){ currentIndex=(currentIndex-1+currentImages.length)%currentImages.length; updateImage(); }
+    function manualNext(){ clearInterval(autoScrollInterval); nextImg(); autoScrollInterval = setInterval(nextImg, 3000); }
+    function manualPrev(){ clearInterval(autoScrollInterval); prevImg(); autoScrollInterval = setInterval(nextImg, 3000); }
+
+    // THREE.JS BACKGROUND
+    const scene=new THREE.Scene();
+    const camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
+    const renderer=new THREE.WebGLRenderer({canvas:document.querySelector("#bg"),alpha:true,antialias:true});
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    camera.position.z=50;
+    const geometry=new THREE.BufferGeometry();
+    const positions=new Float32Array(2000*3);
+    for(let i=0;i<6000;i++){positions[i]=(Math.random()-0.5)*150;}
+    geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
+    const particles=new THREE.Points(geometry,new THREE.PointsMaterial({size:0.4,color:0x3b82f6,transparent:true,opacity:0.4}));
+    scene.add(particles);
+    function animate(){ requestAnimationFrame(animate); particles.rotation.y += 0.001; renderer.render(scene,camera); }
+    animate();
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+    window.onclick = (e) => { if (e.target == document.getElementById("modal")) closeModal(); }
+</script>
+</body>
+</html>
